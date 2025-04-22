@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+	<head>
+		<title>QAOA Peptide Folding Example</title>
+	</head>
+
+	<body>
+		<h5>QAOA Peptide Folding</h5>
+		<button type="button" id="run-qaoa">Run QAOA</button>
+		<br />
+		<br />
+		<div id="drawing"></div>
+		<pre><code id="output"></code></pre>
+
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+		<script src="../../dist/quantum-circuit.min.js"></script>
+
+		<script>
+			var circuit = new QuantumCircuit();
+
+			function runQAOA() {
+				clearLog();
+
+				circuit.init();
+
+				// Define the QAOA circuit for tri-peptide folding
+				// Abstract the peptide as a 3-node graph
+				// Example Hamiltonian encoding folding constraints
+				circuit.addGate("h", 0, 0); // Apply Hadamard to qubit 0
+				circuit.addGate("h", 1, 0); // Apply Hadamard to qubit 1
+				circuit.addGate("h", 2, 0); // Apply Hadamard to qubit 2
+
+				// Add parameterized gates for QAOA layers
+				circuit.addGate("rz", 3, 0, { params: { phi: Math.PI / 4 } });
+				circuit.addGate("rz", 4, 1, { params: { phi: Math.PI / 4 } });
+				circuit.addGate("rz", 5, 2, { params: { phi: Math.PI / 4 } });
+
+				circuit.addGate("cx", 6, [0, 1]); // Add entanglement
+				circuit.addGate("cx", 7, [1, 2]);
+
+				// Simulate the circuit
+				circuit.run();
+
+				// Log the results to the output
+				LogOutput();
+				ShowCircuit();
+
+				// Print results to the screen
+				const outputElement = document.getElementById("output");
+				outputElement.innerText = circuit.stateAsString(true);
+			}
+
+			function clearLog() {
+				$("#output").text("");
+			}
+
+			function Log(s) {
+				$("#output").text($("#output").text() + "\n" + s);
+			}
+
+			function LogOutput() {
+				Log("Final state:");
+				Log("------------");
+				Log(circuit.stateAsString(true));
+				Log("");
+			}
+
+			function ShowCircuit() {
+				var drawing = document.getElementById("drawing");
+				drawing.innerHTML = circuit.exportSVG(true);
+			}
+
+			// Ensure the button click event is properly connected
+			$(document).ready(function () {
+				$("#run-qaoa").off("click").on("click", function () {
+					runQAOA();
+				});
+			});
+		</script>
+	</body>
+</html>

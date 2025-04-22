@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Residue Constraints",
+  "type": "object",
+  "properties": {
+    "residues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "hydropathyIndex": { "type": "number" },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "hydrophobicClusterPenalty": { "type": "number" },
+              "disulfideBond": {
+                "type": "boolean",
+                "description": "Indicates if the residue is part of a disulfide bond."
+              }
+            },
+            "required": []
+          }
+        },
+        "required": ["id", "hydropathyIndex"]
+      }
+    }
+  },
+  "required": ["residues"]
+}

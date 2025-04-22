@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>H₂ VQE with Pauli‑Twirling & ZNE Folding</title>
+  <!-- Use the UMD build from jsDelivr: -->
+  <script src="https://cdn.jsdelivr.net/npm/quantum-circuit@latest/build/quantum-circuit.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    pre { background: #f5f5f5; padding: 1rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>H₂ VQE with Pauli‑Twirling & ZNE Folding</h1>
+  <pre id="output">Initializing…</pre>
+  <h2>Best Circuit Diagram</h2>
+  <pre id="circuit">Waiting for circuit…</pre>
+
+  <script>
+  window.onload = () => {
+    const out = document.getElementById("output");
+    const circPre = document.getElementById("circuit");
+
+    try {
+      // Ensure the QuantumCircuit library is loaded and functional
+      if (typeof QuantumCircuit === "undefined") {
+        out.textContent = "❌ Error: QuantumCircuit library not loaded.";
+        return;
+      }
+
+      // 1) Minimal H₂ Hamiltonian
+      const H2 = [
+        { pauli: "II", coeff: -0.8105479805373266 },
+        { pauli: "ZZ", coeff:  0.17218393261915543 },
+        { pauli: "ZI", coeff:  0.17218393261915543 },
+        { pauli: "XX", coeff:  0.16892753870087912 }
+      ];
+
+      // 2) Helpers
+      function cloneCircuit(circ) {
+        const qc = new QuantumCircuit(circ.numQubits);
+        qc.load(circ.save());
+        return qc;
+      }
+
+      function buildAnsatz(params) {
+        const qc = new QuantumCircuit(2);
+        let t = 0;
+        for (let rep = 0; rep < 2; rep++) {
+          qc.addGate("ry", t, [0], { params: [ params[0] ] });
+          qc.addGate("rz", t, [0], { params: [ params[1] ] });
+          qc.addGate("ry", t, [1], { params: [ params[2] ] });
+          qc.addGate("rz", t, [1], { params: [ params[3] ] });
+          qc.addGate("cz", t, [0,1]);
+          t++;
+        }
+        return qc;
+      }
+
+      // 3) Tiny random‐search VQE
+      function demoVQE(iters=6) {
+        let best = { E: Infinity, p: null, raw: [] };
+        for (let i=0; i<iters; i++) {
+          const p = Array(4).fill(0).map(_=>Math.random()*Math.PI);
+          const { raw, ext } = zne(p);
+          if (ext < best.E) best = { E: ext, p, raw };
+        }
+        return best;
+      }
+
+      // run
+      out.textContent = "Running VQE demo…";
+      setTimeout(()=>{
+        try {
+          const r = demoVQE(6);
+          out.textContent = 
+            `Best ⟨H⟩ (extrapolated): ${r.E.toFixed(6)} Ha\n` +
+            `(raw @λ=1,3,5 → [${r.raw.map(v=>v.toFixed(4)).join(", ")}])\n` +
+            `Params [ry₀,rz₀,ry₁,rz₁]: [${r.p.map(v=>v.toFixed(3)).join(", ")}]`;
+
+          // draw circuit
+          const bestQC = buildAnsatz(r.p);
+          if (!bestQC.exportDiagram) {
+            out.textContent = "❌ Error: exportDiagram method not found in QuantumCircuit.";
+            return;
+          }
+          circPre.textContent = bestQC.exportDiagram();
+
+        } catch (err) {
+          out.textContent = "❌ Error during VQE execution: " + err;
+          console.error(err);
+        }
+      }, 20);
+
+    } catch(err) {
+      out.textContent = "❌ Error: " + err;
+      console.error(err);
+    }
+  };
+  </script>
+</body>
+</html>

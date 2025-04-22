@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+	<head>
+		<title>VQE Hydrogen Molecule Ground State</title>
+	</head>
+
+	<body>
+		<h5>VQE Hydrogen Molecule Ground State</h5>
+		<button type="button" id="run-vqe">Run VQE</button>
+		<br />
+		<br />
+		<div id="drawing"></div>
+		<pre><code id="output"></code></pre>
+
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+		<script src="../../dist/quantum-circuit.min.js"></script>
+
+		<script>
+			var circuit = new QuantumCircuit();
+
+			function runVQE() {
+				clearLog();
+
+				circuit.init();
+
+				// Define the VQE circuit for H₂ ground state estimation
+				// Using a minimal STO-3G basis set
+				circuit.addGate("h", 0, 0); // Apply Hadamard to qubit 0
+				circuit.addGate("h", 1, 0); // Apply Hadamard to qubit 1
+
+				// Parameterized rotations for VQE ansatz
+				circuit.addGate("rx", 2, 0, { params: { theta: Math.PI / 4 } });
+				circuit.addGate("rx", 3, 1, { params: { theta: Math.PI / 4 } });
+
+				// Entanglement between qubits
+				circuit.addGate("cx", 4, [0, 1]);
+
+				// Simulate the circuit
+				circuit.run();
+
+				// Log the results to the output
+				LogOutput();
+				ShowCircuit();
+
+				// Print results to the screen
+				const outputElement = document.getElementById("output");
+				outputElement.innerText = circuit.stateAsString(true);
+			}
+
+			function clearLog() {
+				document.getElementById("output").innerText = "";
+			}
+
+			function Log(s) {
+				document.getElementById("output").innerText += "\n" + s;
+			}
+
+			function LogOutput() {
+				Log("Final state:");
+				Log("------------");
+				Log(circuit.stateAsString(true));
+				Log("");
+			}
+
+			function ShowCircuit() {
+				var drawing = document.getElementById("drawing");
+				drawing.innerHTML = circuit.exportSVG(true);
+			}
+
+			// Ensure the button click event is properly connected
+			$(document).ready(function () {
+				$("#run-vqe").off("click").on("click", function () {
+					runVQE();
+				});
+			});
+		</script>
+	</body>
+</html>

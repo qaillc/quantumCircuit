@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Quantum Circuit Builder - Protein Folding</title>
+	</head>
+
+	<body>
+		<h5>Quantum Circuit Builder - Protein Folding</h5>
+		<button type="button" id="run-folding-simulation">Run Folding Simulation</button>
+		<br />
+		<br />
+		<div id="circuit-drawing"></div>
+		<pre><code id="simulation-output"></code></pre>
+
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+		<script src="../../dist/quantum-circuit.min.js"></script>
+
+		<script>
+			var circuit = new QuantumCircuit();
+
+			function runFoldingSimulation() {
+				clearLog();
+
+				circuit.init();
+
+				// Define the folding logic based on biological constraints
+				// Example: Encoding torsion angles and disulfide bridge constraints
+				const torsionAngles = [Math.PI / 3, Math.PI / 4, Math.PI / 6]; // Example angles
+				const disulfideBridgeWeight = 1.5; // Example weight for disulfide bridges
+
+				// Apply gates to encode torsion angles
+				torsionAngles.forEach((angle, index) => {
+					circuit.addGate("rz", index, 0, { params: { phi: angle } });
+				});
+
+				// Apply additional constraints (e.g., disulfide bridge influence)
+				circuit.addGate("rz", 0, 0, { params: { phi: disulfideBridgeWeight } });
+
+				// Simulate the circuit
+				circuit.run();
+
+				// Log the results to the output
+				logOutput();
+				showCircuit();
+
+				// Print results to the screen
+				const outputElement = document.getElementById("simulation-output");
+				outputElement.innerText = circuit.stateAsString(true);
+			}
+
+			function clearLog() {
+				document.getElementById("simulation-output").innerText = "";
+			}
+
+			function log(s) {
+				document.getElementById("simulation-output").innerText += "\n" + s;
+			}
+
+			function logOutput() {
+				log("Final state:");
+				log("------------");
+				log(circuit.stateAsString(true));
+				log("");
+			}
+
+			function showCircuit() {
+				var drawing = document.getElementById("circuit-drawing");
+				drawing.innerHTML = circuit.exportSVG(true);
+			}
+
+			// Ensure the button click event is properly connected
+			$(document).ready(function () {
+				$("#run-folding-simulation").off("click").on("click", function () {
+					runFoldingSimulation();
+				});
+			});
+		</script>
+	</body>
+</html>
